@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { supabase, supabaseService } from "../lib/supabase";
-
+import { setupUserProfile } from '../utils/databaseSetup';
 /**
  * Authentication hook for managing user session and online status
  * 
@@ -29,28 +29,27 @@ export default function useAuth() {
     }
   };
 
-  // Mark user online function
-  const markUserOnline = async (authUser, fetchAllUsers) => {
-    try {
-      const email = (authUser.email || "").toLowerCase();
-      const { error } = await supabase.rpc("get_or_create_user_position", {
-        p_user_id: authUser.id,
-        p_email: email,
-      });
-      if (error) throw error;
-      
-      if (fetchAllUsers) {
-        await fetchAllUsers();
-      }
-
-      if (!hasSentJoinMessageRef.current) {
-        await sendSystemMessage(`${authUser.email} joined the chat`, 'join');
-        hasSentJoinMessageRef.current = true;
-      }
-    } catch (e) {
-      console.error("markUserOnline error", e);
+  // In the markUserOnline function, replace the RPC call with:
+// In your useAuth hook, update the markUserOnline function:
+const markUserOnline = async (authUser, fetchAllUsers) => {
+  try {
+    // Wait for auth to fully settle
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    const profile = await setupUserProfile(authUser);
+    
+    if (fetchAllUsers && profile) {
+      await fetchAllUsers();
     }
-  };
+
+    if (!hasSentJoinMessageRef.current && profile) {
+      await sendSystemMessage(`${authUser.email} joined the cosmos`, 'join');
+      hasSentJoinMessageRef.current = true;
+    }
+  } catch (e) {
+    console.error("markUserOnline error", e);
+  }
+};
 
   // Mark user offline function
   const markUserOfflineViaService = async (email, fetchAllUsers) => {
@@ -67,31 +66,33 @@ export default function useAuth() {
 
   // Handle auth state changes
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        const currentUser = session?.user ?? null;
-        setUser(currentUser);
-        
-        if (event === 'SIGNED_IN' && currentUser) {
-          // User just signed in
-          hasSentJoinMessageRef.current = false;
-        } else if (event === 'SIGNED_OUT') {
-          // User signed out
-          hasSentJoinMessageRef.current = false;
-        }
-        
-        setLoading(false);
+  const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    async (event, session) => {
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      
+      if (event === 'SIGNED_IN' && currentUser) {
+        // Reset join message flag for new session
+        hasSentJoinMessageRef.current = false;
+        isSigningOutRef.current = false;
+      } else if (event === 'SIGNED_OUT') {
+        // Clear all flags on sign out
+        hasSentJoinMessageRef.current = false;
+        isSigningOutRef.current = false;
       }
-    );
-
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
+      
       setLoading(false);
-    });
+    }
+  );
 
-    return () => subscription.unsubscribe();
-  }, []);
+  // Get initial session
+  supabase.auth.getSession().then(({ data: { session } }) => {
+    setUser(session?.user ?? null);
+    setLoading(false);
+  });
+
+  return () => subscription.unsubscribe();
+}, []);
 
   return {
     user,

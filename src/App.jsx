@@ -1,18 +1,39 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from './lib/supabase';
 import useAuth from './hooks/useAuth';
 import AuthPage from './components/AuthPage';
+import CosmicSky from './components/CosmicSky';
 import './App.css';
 
 function App() {
   const { 
     user, 
     loading, 
-    markUserOnline,
-    markUserOfflineViaService,
-    isSigningOutRef,
-    hasSentJoinMessageRef
+    markUserOnline
   } = useAuth();
+
+  const [users, setUsers] = useState([]);
+  const isSigningOutRef = useRef(false);
+
+  // Fetch all users
+  const fetchAllUsers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.log('No users found yet, continuing...');
+        setUsers([]);
+        return;
+      }
+      setUsers(data || []);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      setUsers([]);
+    }
+  };
 
   // Handle Google Sign In
   const handleSignIn = async () => {
@@ -36,31 +57,49 @@ function App() {
     try {
       isSigningOutRef.current = true;
       
-      if (user?.email) {
-        await markUserOfflineViaService(user.email);
+      if (user?.id) {
+        // Mark user as offline in database
+        const { error } = await supabase
+          .from('user_profiles')
+          .update({ 
+            online: false, 
+            last_seen: new Date().toISOString() 
+          })
+          .eq('id', user.id);
+
+        if (error) {
+          console.error('Error updating offline status:', error);
+        }
       }
       
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
-      hasSentJoinMessageRef.current = false;
+      // Clear local state
+      setUsers([]);
+      
     } catch (error) {
       console.error('Error signing out:', error.message);
     }
   };
 
-  // Mark user as online when they authenticate
+  // Set up user and fetch users when authenticated
   useEffect(() => {
     if (user && !isSigningOutRef.current) {
-      markUserOnline(user);
+      markUserOnline(user, fetchAllUsers);
+      
+      // Set up polling for user updates
+      const interval = setInterval(fetchAllUsers, 3000);
+      
+      return () => clearInterval(interval);
     }
   }, [user]);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-black flex items-center justify-center">
-        <div className="text-white text-center">
-          <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+      <div className="auth-container">
+        <div className="auth-card">
+          <div className="loading-spinner"></div>
           <p>Loading CosmicFire...</p>
         </div>
       </div>
@@ -71,28 +110,28 @@ function App() {
     return <AuthPage onSignIn={handleSignIn} />;
   }
 
+  const onlineUsers = users.filter(u => u.online);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-black text-white">
+    <div className="app-container">
       {/* Header */}
-      <header className="border-b border-white/10">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+      <header className="app-header">
+        <div className="header-content">
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
-              CosmicFire
-            </h1>
-            <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded-full">
-              Online
+            <h1 className="app-title">CosmicFire</h1>
+            <span className="online-status">
+              {onlineUsers.length} Online
             </span>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="user-controls">
             <div className="text-right">
-              <p className="text-sm font-medium">{user.email}</p>
-              <p className="text-xs text-gray-400">Welcome to the cosmos</p>
+              <p className="user-email">{user.email}</p>
+              <p className="text-xs text-gray-400">Connected to the cosmos</p>
             </div>
             <button
               onClick={handleSignOut}
-              className="px-4 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors border border-red-500/30"
+              className="signout-btn"
             >
               Sign Out
             </button>
@@ -100,22 +139,9 @@ function App() {
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold mb-4">Welcome to CosmicFire</h2>
-          <p className="text-gray-300 max-w-2xl mx-auto">
-            Your celestial chat experience begins here. Connect with others across the cosmos.
-          </p>
-        </div>
-
-        {/* Chat interface will go here */}
-        <div className="max-w-4xl mx-auto bg-black/30 rounded-2xl p-8 border border-white/10 backdrop-blur-sm">
-          <div className="text-center text-gray-400">
-            <p>Chat interface coming soon...</p>
-            <p className="text-sm mt-2">You're authenticated as {user.email}</p>
-          </div>
-        </div>
+      {/* Main content area */}
+      <main className="main-content">
+        <CosmicSky currentUser={user} users={onlineUsers} />
       </main>
     </div>
   );
