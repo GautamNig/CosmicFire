@@ -6,6 +6,9 @@ import AuthPage from './components/AuthPage';
 import CosmicSky from './components/CosmicSky';
 import { AppSettings } from './config/settings';
 import { PositionManager } from './utils/positionManager';
+import ErrorBoundary from './components/ErrorBoundary';
+import MessageInput from './components/MessageInput';
+
 import './App.css';
 
 function App() {
@@ -18,6 +21,12 @@ function App() {
 
   const [users, setUsers] = useState([]);
   const isSigningOutRef = useRef(false);
+  const [messageRefresh, setMessageRefresh] = useState(0);
+
+  const handleMessageSent = () => {
+  setMessageRefresh(prev => prev + 1); // Trigger re-renders if needed
+};
+
 
   // Enhanced fetch all users with better error handling
   const fetchAllUsers = async () => {
@@ -179,42 +188,49 @@ function App() {
   console.log(`🎯 App rendering - Online users: ${onlineUsers.length}, Total users: ${users.length}`);
 
   return (
-    <div className="app-container">
-      {/* Header */}
-      <header className="app-header">
-        <div className="header-content">
-          <div className="flex items-center gap-3">
-            <h1 className="app-title">CosmicFire</h1>
-            <span className="online-status">
-              {onlineUsers.length} Online
-            </span>
-          </div>
+  <div className="app">
+    <ErrorBoundary>
+      {!user ? (
+        <AuthPage onSignIn={handleSignIn} />
+      ) : (
+        <>
+          {/* Your existing CosmicSky component */}
+          <CosmicSky 
+            currentUser={user} 
+            users={users} 
+            fetchAllUsers={fetchAllUsers} 
+          />
           
-          <div className="user-controls">
-            <div className="text-right">
-              <p className="user-email">{user.email}</p>
-              <p className="text-xs text-gray-400">Connected to the cosmos</p>
-            </div>
-            <button
-              onClick={handleSignOut}
-              className="signout-btn"
-            >
-              Sign Out
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main content area */}
-      <main className="main-content">
-        <CosmicSky 
-          currentUser={user} 
-          users={users} // Pass ALL users, let CosmicSky filter online ones
-          fetchAllUsers={fetchAllUsers}
-        />
-      </main>
-    </div>
-  );
+          {/* ADD MESSAGE INPUT HERE */}
+          <MessageInput 
+            currentUser={user} 
+            onMessageSent={handleMessageSent}
+          />
+          
+          {/* Your existing sign out button */}
+          <button 
+            onClick={handleSignOut}
+            className="sign-out-btn"
+            style={{
+              position: 'absolute',
+              top: '20px',
+              right: '20px',
+              background: 'rgba(255, 255, 255, 0.1)',
+              color: 'white',
+              border: '1px solid rgba(255, 255, 255, 0.3)',
+              padding: '8px 16px',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              zIndex: 1000
+            }}
+          >
+            Sign Out
+          </button>
+        </>
+      )}
+    </ErrorBoundary>
+  </div>
+);
 }
 
 export default App;

@@ -4,7 +4,7 @@ import { PositionManager } from '../utils/positionManager';
 import { AppSettings } from '../config/settings';
 import './Star.css';
 
-export default function Star({ user, isCurrentUser, onClick, isNewLogin = false, allUsers = [] }) {
+export default function Star({ user, isCurrentUser, onClick,onMessageClick, isNewLogin = false, allUsers = [] }) {
   // FIX: Ensure position always has valid defaults
   const [position, setPosition] = useState({ x: 50, y: 50 });
   const [showGlow, setShowGlow] = useState(false);
@@ -63,21 +63,26 @@ export default function Star({ user, isCurrentUser, onClick, isNewLogin = false,
 
   // ... rest of the useEffect hooks remain the same
 
+
   const handleClick = (e) => {
     e.stopPropagation();
     console.log(`🖱️ Star clicked: ${user.email}`);
     onClick(user);
   };
 
-  const starSize = isCurrentUser ? AppSettings.STARS.CURRENT_USER_SIZE : AppSettings.STARS.SIZE;
-  const starClass = `star ${isCurrentUser ? 'current-user' : ''} ${showGlow ? 'glow' : ''} ${user.online ? 'online' : 'offline'}`;
+  const handleMessageClick = (e) => {
+    e.stopPropagation();
+    console.log(`💬 Message history clicked for: ${user.email}`);
+    onMessageClick?.(user);
+  };
 
-  // FIX: Safe position access
+ const starSize = isCurrentUser ? AppSettings.STARS.CURRENT_USER_SIZE : AppSettings.STARS.SIZE;
+  const starClass = `star ${isCurrentUser ? 'current-user' : ''} ${showGlow ? 'glow' : ''} ${user.online ? 'online' : 'offline'}`;
   const safePosition = position || { x: 50, y: 50 };
 
   console.log(`🎨 Rendering star for ${user.email} at position:`, safePosition, `Class: ${starClass}`);
 
-  return (
+   return (
     <div 
       className={starClass}
       style={{
@@ -93,6 +98,17 @@ export default function Star({ user, isCurrentUser, onClick, isNewLogin = false,
     >
       <div className="star-shape"></div>
       {showGlow && <div className="glow-effect"></div>}
+      
+      {/* Message history button - ONLY for other users, not current user */}
+      {
+        <button 
+          className="message-history-btn"
+          onClick={handleMessageClick}
+          title="View message history"
+        >
+          💬
+        </button>
+      }
     </div>
   );
 }

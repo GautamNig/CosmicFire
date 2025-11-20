@@ -7,22 +7,66 @@ import { PositionManager } from '../utils/positionManager';
 import { AppSettings } from '../config/settings';
 import './CosmicSky.css';
 import FirewoodAnimation from './FirewoodAnimation';
+import MessageTooltip from './MessageTooltip';
+import MessageHistory from './MessageHistory';
 
 export default function CosmicSky({ currentUser, users, fetchAllUsers }) {
   const [selectedUser, setSelectedUser] = useState(null);
   const [backgroundStars, setBackgroundStars] = useState([]);
   const [newLoginIds, setNewLoginIds] = useState(new Set());
   const [allUsers, setAllUsers] = useState([]);
+  const [activeMessages, setActiveMessages] = useState([]);
+  const [messageHistoryUser, setMessageHistoryUser] = useState(null);
+
 
   // Filter only online users for display - DEFINE THIS FIRST
   const onlineUsers = users ? users.filter(user => user.online) : [];
+
+const handleNewMessage = async (payload) => {
+  console.log('📢 New message event:', payload);
+  
+  if (payload.eventType === 'INSERT' && payload.new.type === 'message') {
+    const messageUser = users.find(u => u.id === payload.new.user_id);
+    if (messageUser) {
+      // Get the user's current position
+      const userPosition = await PositionManager.getOrAssignPosition(messageUser.id, messageUser.email);
+      
+      const newMessage = {
+        id: payload.new.id + Date.now(), // Add timestamp to make unique
+        message: payload.new,
+        user: messageUser,
+        position: userPosition || { x: 50, y: 50 }
+      };
+      
+      console.log('💬 Adding tooltip message:', newMessage);
+      setActiveMessages(prev => [...prev, newMessage]);
+      
+      // Auto-remove after 5 seconds
+      setTimeout(() => {
+        console.log('🕒 Auto-removing message:', newMessage.id);
+        setActiveMessages(prev => prev.filter(msg => msg.id !== newMessage.id));
+      }, 5000);
+    }
+  }
+};
+
+  // Add this function to remove expired messages
+  const handleMessageExpire = (messageId) => {
+    setActiveMessages(prev => prev.filter(msg => msg.id !== messageId));
+  };
+
+  // Add this function for message history clicks
+  const handleMessageHistoryClick = (user) => {
+    console.log('📖 Opening message history for:', user.email);
+    setMessageHistoryUser(user);
+  };
 
   // Debug: log everything
   useEffect(() => {
     console.log('🔭 CosmicSky - Current User:', currentUser?.email, currentUser?.id);
     console.log('🔭 CosmicSky - Received users prop:', users);
     console.log('🔭 CosmicSky - Users count:', users?.length);
-    
+
     if (users && users.length > 0) {
       users.forEach((user, index) => {
         console.log(`   ${index + 1}. ${user.email} | Online: ${user.online} | ID: ${user.id}`);
@@ -69,25 +113,25 @@ export default function CosmicSky({ currentUser, users, fetchAllUsers }) {
   useEffect(() => {
     if (users && users.length > 0) {
       console.log('👥 Online users for new login detection:', onlineUsers.length);
-      
+
       // Only consider users as "new" if they're online AND we haven't seen them before
       const newLogins = onlineUsers.filter(user => {
-        const isActuallyNew = 
-          !newLoginIds.has(user.id) && 
+        const isActuallyNew =
+          !newLoginIds.has(user.id) &&
           user.id !== currentUser?.id &&
           user.online;
-        
+
         if (isActuallyNew) {
           console.log(`🎯 ${user.email} is considered new login`);
         }
-        
+
         return isActuallyNew;
       });
-      
+
       if (newLogins.length > 0) {
         console.log('🎉 New login detected:', newLogins.map(u => u.email));
         setNewLoginIds(prev => new Set([...prev, ...newLogins.map(u => u.id)]));
-        
+
         // Auto-remove from new login set after glow duration
         setTimeout(() => {
           setNewLoginIds(prev => {
@@ -98,12 +142,55 @@ export default function CosmicSky({ currentUser, users, fetchAllUsers }) {
           });
         }, AppSettings.STARS.GLOW_DURATION);
       }
-      
+
       // Clean up positions for users who are no longer online
       const onlineUserIds = onlineUsers.map(u => u.id);
       PositionManager.cleanupOfflinePositions();
     }
   }, [users, currentUser, newLoginIds, onlineUsers]);
+
+  useEffect(() => {
+    if (!currentUser) return;
+
+    console.log('📡 Setting up chat messages subscription...');
+
+    const subscription = supabase
+      .channel('chat_messages_channel')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'chat_messages',
+        },
+        handleNewMessage
+      )
+      .subscribe((status) => {
+        console.log('💬 Chat messages subscription status:', status);
+      });
+
+    return () => {
+      console.log('🧹 Unsubscribing from chat messages');
+      subscription.unsubscribe();
+    };
+  }, [currentUser, users]);
+
+  useEffect(() => {
+    const subscription = supabase
+      .channel('chat_messages')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'chat_messages',
+        },
+        handleNewMessage
+      )
+      .subscribe();
+
+    return () => subscription.unsubscribe();
+  }, [users]);
 
   // Real-time subscription
   useEffect(() => {
@@ -125,10 +212,10 @@ export default function CosmicSky({ currentUser, users, fetchAllUsers }) {
         },
         async (payload) => {
           console.log('📢 Real-time user event:', payload.eventType, payload.new?.email);
-          
+
           // Sync positions when user data changes
           await PositionManager.getAllUserPositions();
-          
+
           // Refresh user list
           setTimeout(() => {
             fetchAllUsers();
@@ -194,6 +281,7 @@ export default function CosmicSky({ currentUser, users, fetchAllUsers }) {
                 isCurrentUser={currentUser?.id === user.id}
                 isNewLogin={newLoginIds.has(user.id)}
                 onClick={handleStarClick}
+                onMessageClick={handleMessageHistoryClick} // Make sure this is passed
                 allUsers={onlineUsers}
               />
             );
@@ -206,6 +294,24 @@ export default function CosmicSky({ currentUser, users, fetchAllUsers }) {
           </div>
         )}
       </div>
+
+      {activeMessages.map(msg => (
+  <MessageTooltip
+    key={msg.id}
+    message={msg.message}
+    user={msg.user}
+    position={msg.position}
+    currentUser={currentUser}
+    // Remove onExpire since we're handling removal in CosmicSky
+  />
+))}
+
+      {/* Message history sidebar */}
+      <MessageHistory
+        user={messageHistoryUser}
+        isOpen={!!messageHistoryUser}
+        onClose={() => setMessageHistoryUser(null)}
+      />
 
       {/* User Popup */}
       {selectedUser && (

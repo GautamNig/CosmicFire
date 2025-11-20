@@ -1,0 +1,219 @@
+/* TOOLTIP CONTAINER */
+.message-tooltip {
+  position: absolute;
+  z-index: 200;
+  animation: fadeIn 0.3s ease;
+  pointer-events: none;
+  max-width: 280px;
+  min-width: 120px;
+}
+
+/* CURRENT USER - COSMIC PURPLE */
+.tooltip-bubble.current-user {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border-radius: 18px 18px 6px 18px;
+  padding: 12px 14px 8px 14px;
+  box-shadow: 
+    0 4px 20px rgba(99, 102, 241, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  position: relative;
+  backdrop-filter: blur(10px);
+}
+
+/* OTHER USER - COSMIC BLUE */
+.tooltip-bubble.other-user {
+  background: linear-gradient(135deg, #06b6d4, #3b82f6);
+  border-radius: 18px 18px 18px 6px;
+  padding: 12px 14px 8px 14px;
+  box-shadow: 
+    0 4px 20px rgba(6, 182, 212, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  position: relative;
+  backdrop-filter: blur(10px);
+}
+
+/* MESSAGE HEADER */
+.message-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  gap: 12px; /* Add space between username and time */
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Subtle separator */
+}
+
+.username {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  flex-shrink: 0; /* Prevent username from shrinking */
+}
+
+.message-time {
+  font-size: 10px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  flex-shrink: 0; /* Prevent time from shrinking */
+  opacity: 0.8;
+}
+
+/* MESSAGE CONTENT - Adjust for new header */
+.message-content {
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 14px;
+  line-height: 1.4;
+  font-weight: 400;
+  word-wrap: break-word;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  padding-top: 2px; /* Add space below header */
+}
+
+/* ARROW SYSTEM - ORIGINATING FROM STAR */
+.tooltip-bubble::before {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: inherit;
+  transform: rotate(45deg);
+  z-index: -1;
+}
+
+/* ARROW POSITIONING - CONNECT TO STAR */
+
+/* Bubble BELOW star (star in top half) */
+.tooltip-bubble.arrow-down::before {
+  top: -6px;
+  left: 20px;
+}
+
+/* Bubble ABOVE star (star in bottom half) */
+.tooltip-bubble.arrow-up::before {
+  bottom: -6px;
+  left: 20px;
+}
+
+/* Bubble to RIGHT of star (star near left edge) */
+.tooltip-bubble.arrow-left::before {
+  left: -6px;
+  top: 50%;
+  transform: translateY(-50%) rotate(45deg);
+}
+
+/* Bubble to LEFT of star (star near right edge) */
+.tooltip-bubble.arrow-right::before {
+  right: -6px;
+  top: 50%;
+  transform: translateY(-50%) rotate(45deg);
+}
+
+/* EDGE ADJUSTMENTS FOR ARROW */
+.tooltip-bubble.arrow-down.arrow-left::before {
+  left: 30px;
+}
+
+.tooltip-bubble.arrow-down.arrow-right::before {
+  left: calc(100% - 30px);
+}
+
+.tooltip-bubble.arrow-up.arrow-left::before {
+  left: 30px;
+}
+
+.tooltip-bubble.arrow-up.arrow-right::before {
+  left: calc(100% - 30px);
+}
+
+/* GLOW EFFECT FOR BUBBLES */
+.tooltip-bubble.current-user {
+  animation: cosmicGlow 2s ease-in-out infinite alternate;
+}
+
+.tooltip-bubble.other-user {
+  animation: cosmicGlow 2s ease-in-out 1s infinite alternate;
+}
+
+@keyframes cosmicGlow {
+  from {
+    box-shadow: 
+      0 4px 20px rgba(99, 102, 241, 0.3),
+      0 0 0 1px rgba(255, 255, 255, 0.1);
+  }
+  to {
+    box-shadow: 
+      0 4px 30px rgba(99, 102, 241, 0.5),
+      0 0 0 1px rgba(255, 255, 255, 0.2);
+  }
+}
+
+/* ANIMATIONS */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 10px) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -10px) scale(0.8);
+  }
+}
+
+.message-tooltip.fading {
+  animation: fadeOut 0.3s ease forwards;
+}
+
+/* STAR CONNECTOR LINE */
+.tooltip-bubble::after {
+  content: '';
+  position: absolute;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  height: 1px;
+}
+
+.tooltip-bubble.arrow-down::after {
+  top: -3px;
+  left: 20px;
+  width: 2px;
+  height: 8px;
+  background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.5));
+}
+
+.tooltip-bubble.arrow-up::after {
+  bottom: -3px;
+  left: 20px;
+  width: 2px;
+  height: 8px;
+  background: linear-gradient(0deg, transparent, rgba(255, 255, 255, 0.5));
+}
+
+.tooltip-bubble.arrow-left::after {
+  left: -3px;
+  top: 50%;
+  width: 8px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5));
+}
+
+.tooltip-bubble.arrow-right::after {
+  right: -3px;
+  top: 50%;
+  width: 8px;
+  height: 2px;
+  background: linear-gradient(270deg, transparent, rgba(255, 255, 255, 0.5));
+}

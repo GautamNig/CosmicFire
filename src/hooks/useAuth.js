@@ -26,25 +26,23 @@ export default function useAuth() {
     }
   };
 
-  const markUserOnline = async (authUser, fetchAllUsers) => {
-    try {
-      // Wait for auth to fully settle
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      const profile = await setupUserProfile(authUser);
-      
-      if (fetchAllUsers && profile) {
-        await fetchAllUsers();
-      }
-
-      if (!hasSentJoinMessageRef.current && profile) {
-        await sendSystemMessage(`${authUser.email} joined the cosmos`, 'join');
-        hasSentJoinMessageRef.current = true;
-      }
-    } catch (e) {
-      console.error("markUserOnline error", e);
+ const markUserOnline = async (user) => {
+  try {
+    console.log('🟢 Marking user online:', user.email);
+    
+    // Use the improved setupUserProfile
+    const profile = await setupUserProfile(user);
+    
+    if (profile) {
+      console.log('✅ User marked online successfully');
+    } else {
+      console.warn('⚠️ Could not mark user online, but continuing...');
     }
-  };
+  } catch (error) {
+    console.error('❌ Error marking user online:', error);
+    // Don't throw - allow app to continue
+  }
+};
 
   // Mark user offline function
   const markUserOfflineViaService = async (email, fetchAllUsers) => {
