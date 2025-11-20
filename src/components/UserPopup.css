@@ -124,3 +124,191 @@
     transform: translateY(0);
   }
 }
+
+/* Relationship Actions */
+.relationship-actions {
+  margin: 16px 0;
+  text-align: center;
+}
+
+.follow-btn, .unfollow-btn {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  min-width: 120px;
+}
+
+.follow-btn:hover {
+  background: linear-gradient(135deg, #5b5feb, #7c4df5);
+  transform: translateY(-1px);
+}
+
+.unfollow-btn {
+  background: linear-gradient(135deg, #6b7280, #4b5563);
+}
+
+.unfollow-btn:hover {
+  background: linear-gradient(135deg, #5a6270, #3f4754);
+}
+
+.follow-btn.loading, .unfollow-btn.loading {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.friend-dot, .follower-dot, .following-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status {
+  font-size: 10px;
+  margin-left: auto;
+}
+
+.status.online {
+  color: #10b981;
+}
+
+.status.offline {
+  color: #6b7280;
+}
+
+/* Relationships Section */
+.relationships-section {
+  margin: 16px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 16px;
+}
+
+.relationships-toggle {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: color 0.2s ease;
+}
+
+.relationships-toggle:hover {
+  color: white;
+}
+
+.relationships-content {
+  margin-top: 12px;
+  animation: slideDown 0.3s ease;
+}
+
+/* Relationship Lists with Always-Visible Scrollbar */
+.relationship-list {
+  max-height: 120px;
+  overflow-y: auto;
+  padding-right: 8px; /* Add space for scrollbar */
+}
+
+/* Force scrollbar to be always visible on Webkit browsers */
+.relationship-list::-webkit-scrollbar {
+  width: 6px; /* Make scrollbar slightly wider */
+}
+
+.relationship-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.relationship-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+}
+
+/* Make scrollbar always visible (for Webkit) */
+.relationship-list::-webkit-scrollbar-thumb {
+  visibility: visible;
+  opacity: 0.7;
+}
+
+.relationship-list:hover::-webkit-scrollbar-thumb {
+  opacity: 1;
+}
+
+/* For Firefox - ensure scrollbar is always visible */
+.relationship-list {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1);
+}
+
+/* Relationship Items - Better spacing */
+.relationship-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px; /* Add horizontal padding */
+  margin: 2px 0; /* Add vertical spacing */
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.relationship-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Relationship Groups - Better organization */
+.relationship-group {
+  margin-bottom: 20px; /* More space between groups */
+}
+
+.relationship-group h4 {
+  color: white;
+  margin: 0 0 12px 0; /* More space below heading */
+  font-size: 14px;
+  font-weight: 600;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Relationships Content - Better layout */
+.relationships-content {
+  margin-top: 16px;
+  animation: slideDown 0.3s ease;
+  max-height: 400px; /* Limit total height */
+  overflow-y: auto; /* Scroll entire section if needed */
+  padding-right: 4px;
+}
+
+/* Individual group height limits */
+.relationship-group .relationship-list {
+  max-height: 100px; /* Slightly shorter to fit better */
+}
+
+/* No relationships message */
+.no-relationships {
+  color: #94a3b8;
+  font-size: 12px;
+  font-style: italic;
+  margin: 8px 0;
+  text-align: center;
+  padding: 8px;
+}

@@ -315,7 +315,7 @@ const handleNewMessage = async (payload) => {
 
       {/* User Popup */}
       {selectedUser && (
-        <UserPopup user={selectedUser} onClose={handleClosePopup} />
+        <UserPopup user={selectedUser} onClose={handleClosePopup} currentUser={currentUser} />
       )}
     </div>
   );
