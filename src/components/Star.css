@@ -1,64 +1,37 @@
-/* src/components/Star.css */
-.star {
-  position: absolute;
-  width: 16px;
-  height: 16px;
-  transform: translate(-50%, -50%);
-  cursor: pointer;
-  transition: all 0.3s ease;
-  z-index: 10;
-}
-
-.star-core {
+/* src/components/Star.css - SIMPLIFIED VERSION */
+.star-shape {
   width: 100%;
   height: 100%;
   background: var(--star-color, #ffffff);
-  border-radius: 50%;
-  box-shadow: 0 0 10px var(--star-color, #ffffff);
-  animation: twinkle 4s infinite alternate;
+  clip-path: polygon(
+    50% 0%,
+    61% 35%,
+    98% 35%,
+    68% 57%,
+    79% 91%,
+    50% 70%,
+    21% 91%,
+    32% 57%,
+    2% 35%,
+    39% 35%
+  );
+  transition: all 0.3s ease;
 }
 
-.star-glow {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  border-radius: 50%;
-  background: var(--star-color, #ffffff);
-  transform: translate(-50%, -50%);
-  opacity: 0.3;
-  animation: pulse 3s infinite alternate;
+/* Current user star is more prominent */
+.star.current-user .star-shape {
+  filter: 
+    drop-shadow(0 0 2px var(--star-color))
+    drop-shadow(0 0 4px var(--star-color));
+  animation: gentle-pulse 4s infinite ease-in-out;
 }
 
-.star.current-user .star-core {
-  box-shadow: 0 0 15px var(--star-color), 0 0 30px var(--star-color);
+/* Glow effect during spawn */
+.star.glow .star-shape {
+  animation: spawn-glow 3s ease-out;
 }
 
-.star.online {
-  opacity: 1;
-}
-
-.star.offline {
-  opacity: 0.3;
-  transform: scale(0.8);
-  transition: all 1s ease;
-}
-
-.star.offline .star-core {
-  animation: none;
-  box-shadow: 0 0 4px var(--star-color);
-}
-
-.star.glow .star-core {
-  animation: collisionGlow 0.5s ease-out;
-}
-
-.star.twinkle .star-core {
-  animation: newUserTwinkle 3s ease-out;
-}
-
-.twinkle-effect {
+.glow-effect {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -67,96 +40,115 @@
   border-radius: 50%;
   background: var(--star-color);
   transform: translate(-50%, -50%);
-  animation: twinklePulse 3s ease-out;
+  animation: glow-pulse 3s ease-out;
+  pointer-events: none;
+  z-index: -1;
 }
 
-@keyframes twinkle {
+.star {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  transition: all 0.5s ease;
+  z-index: 100; /* Ensure high z-index */
+  pointer-events: auto;
+  /* Ensure visibility */
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Force online stars to be visible */
+.star.online {
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+}
+
+.star.offline {
+  opacity: 0.2;
+  transform: translate(-50%, -50%) scale(0.6);
+  transition: all 1s ease;
+}
+
+.star.offline .star-shape {
+  animation: none;
+}
+
+/* Animations */
+@keyframes gentle-pulse {
   0%, 100% { 
-    opacity: 0.8; 
-    transform: scale(1); 
+    opacity: 0.9;
+    transform: scale(1);
   }
   50% { 
-    opacity: 1; 
-    transform: scale(1.2); 
+    opacity: 1;
+    transform: scale(1.1);
   }
 }
 
-@keyframes pulse {
+@keyframes spawn-glow {
   0% { 
-    width: 0; 
-    height: 0; 
-    opacity: 0.3; 
-  }
-  100% { 
-    width: 40px; 
-    height: 40px; 
-    opacity: 0; 
-  }
-}
-
-@keyframes collisionGlow {
-  0% { 
-    transform: scale(1); 
-    box-shadow: 0 0 8px var(--star-color); 
-  }
-  50% { 
-    transform: scale(1.8); 
-    box-shadow: 0 0 30px var(--star-color), 0 0 60px var(--star-color); 
-  }
-  100% { 
-    transform: scale(1); 
-    box-shadow: 0 0 8px var(--star-color); 
-  }
-}
-
-@keyframes newUserTwinkle {
-  0% { 
-    transform: scale(0.1);
+    transform: scale(0.5);
     opacity: 0;
-    box-shadow: 0 0 0px var(--star-color);
+    filter: 
+      drop-shadow(0 0 0px var(--star-color))
+      drop-shadow(0 0 0px var(--star-color));
   }
   20% { 
-    transform: scale(1.8);
+    transform: scale(1.2);
     opacity: 1;
-    box-shadow: 0 0 50px var(--star-color), 0 0 100px var(--star-color);
+    filter: 
+      drop-shadow(0 0 4px var(--star-color))
+      drop-shadow(0 0 8px var(--star-color));
   }
   40% { 
-    transform: scale(1.3);
-    box-shadow: 0 0 30px var(--star-color), 0 0 60px var(--star-color);
+    transform: scale(1.1);
+    filter: 
+      drop-shadow(0 0 3px var(--star-color))
+      drop-shadow(0 0 6px var(--star-color));
   }
   60% { 
-    transform: scale(1.6);
-    box-shadow: 0 0 40px var(--star-color), 0 0 80px var(--star-color);
+    transform: scale(1.15);
+    filter: 
+      drop-shadow(0 0 3px var(--star-color))
+      drop-shadow(0 0 6px var(--star-color));
   }
   80% { 
-    transform: scale(1.2);
-    box-shadow: 0 0 20px var(--star-color), 0 0 40px var(--star-color);
+    transform: scale(1.05);
+    filter: 
+      drop-shadow(0 0 2px var(--star-color))
+      drop-shadow(0 0 4px var(--star-color));
   }
   100% { 
     transform: scale(1);
-    box-shadow: 0 0 10px var(--star-color);
+    filter: 
+      drop-shadow(0 0 1px var(--star-color))
+      drop-shadow(0 0 2px var(--star-color));
   }
 }
 
-@keyframes twinklePulse {
+@keyframes glow-pulse {
   0% { 
     width: 0; 
     height: 0; 
     opacity: 0.8;
   }
   50% { 
-    width: 100px; 
-    height: 100px; 
+    width: calc(var(--star-size) * 4); 
+    height: calc(var(--star-size) * 4); 
     opacity: 0;
   }
   100% { 
-    width: 100px; 
-    height: 100px; 
+    width: calc(var(--star-size) * 4); 
+    height: calc(var(--star-size) * 4); 
     opacity: 0;
   }
 }
 
-.star:hover .star-core {
-  transform: scale(1.3);
-  box-shadow: 0 0 20px var(--star-color), 0 0 40px var(--star-color);
+.star:hover .star-shape {
+  transform: scale(1.2);
+  filter: 
+    drop-shadow(0 0 3px var(--star-color))
+    drop-shadow(0 0 6px var(--star-color));
+  transition: all 0.2s ease;
 }
