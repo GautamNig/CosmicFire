@@ -45,7 +45,7 @@ const handleNewMessage = async (payload) => {
       setTimeout(() => {
         console.log('🕒 Auto-removing message:', newMessage.id);
         setActiveMessages(prev => prev.filter(msg => msg.id !== newMessage.id));
-      }, 5000);
+      }, AppSettings.MESSAGES.TOOLTIP_DURATION);
     }
   }
 };

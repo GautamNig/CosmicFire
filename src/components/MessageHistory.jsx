@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import './MessageHistory.css';
+import { AppSettings } from '../config/settings';
 
 export default function MessageHistory({ user, isOpen, onClose }) {
   const [messages, setMessages] = useState([]);
@@ -20,7 +21,7 @@ export default function MessageHistory({ user, isOpen, onClose }) {
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(30);
+        .limit(AppSettings.MESSAGES.MESSAGE_HISTORY_LIMIT);
 
       if (error) throw error;
       setMessages(data || []);

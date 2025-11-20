@@ -76,7 +76,7 @@ export default function Star({ user, isCurrentUser, onClick,onMessageClick, isNe
     onMessageClick?.(user);
   };
 
- const starSize = isCurrentUser ? AppSettings.STARS.CURRENT_USER_SIZE : AppSettings.STARS.SIZE;
+  const starSize = isCurrentUser ? AppSettings.STARS.CURRENT_USER_SIZE : AppSettings.STARS.SIZE;
   const starClass = `star ${isCurrentUser ? 'current-user' : ''} ${showGlow ? 'glow' : ''} ${user.online ? 'online' : 'offline'}`;
   const safePosition = position || { x: 50, y: 50 };
 

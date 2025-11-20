@@ -75,8 +75,8 @@ export class PositionManager {
 
   // Generate random position
   static generateRandomPosition() {
-    const minRadius = 20;
-    const maxRadius = 45;
+    const minRadius = AppSettings.POSITIONS.MIN_RADIUS;
+    const maxRadius = AppSettings.POSITIONS.MAX_RADIUS;
     
     const angle = Math.random() * 2 * Math.PI;
     const distance = minRadius + Math.random() * (maxRadius - minRadius);

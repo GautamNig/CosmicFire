@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'; // Add useEffect
 import { supabase } from '../lib/supabase';
+import { AppSettings } from '../config/settings';
 import './MessageInput.css';
 
 export default function MessageInput({ currentUser, onMessageSent }) {
@@ -50,8 +51,8 @@ export default function MessageInput({ currentUser, onMessageSent }) {
       return;
     }
     
-    if (message.length > 50) {
-      setError('Message too long (max 50 characters)');
+    if (message.length > AppSettings.MESSAGES.MAX_MESSAGE_LENGTH) {
+      setError(`Message too long ${AppSettings.MESSAGES.MAX_MESSAGE_LENGTH} characters)`);
       return;
     }
 
@@ -64,8 +65,8 @@ export default function MessageInput({ currentUser, onMessageSent }) {
       // Check cooldown first
       const canSend = await checkCooldown();
       if (!canSend) {
-        setCooldown(8); // Set 8 seconds cooldown
-        setError(`Please wait 8 seconds before sending another message`);
+        setCooldown(AppSettings.MESSAGES.RATE_LIMIT_SECONDS); // Set 8 seconds cooldown
+        setError(`Please wait ${AppSettings.MESSAGES.RATE_LIMIT_SECONDS} seconds before sending another message`);
         setIsSending(false);
         return;
       }
@@ -97,7 +98,7 @@ export default function MessageInput({ currentUser, onMessageSent }) {
 
       console.log('✅ Message sent successfully!');
       setMessage('');
-      setCooldown(8); // Start cooldown timer
+      setCooldown(AppSettings.MESSAGES.RATE_LIMIT_SECONDS); // Start cooldown timer
       onMessageSent?.();
 
     } catch (error) {
