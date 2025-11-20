@@ -59,29 +59,32 @@ DECLARE
   new_x FLOAT;
   new_y FLOAT;
 BEGIN
-  -- Check if user already has a position
+  -- Check if user already has a VALID position (not center)
   SELECT current_position INTO current_pos
   FROM user_profiles 
-  WHERE id = user_id;
+  WHERE id = user_id 
+  AND current_position IS NOT NULL 
+  AND (current_position ->> 'x')::FLOAT != 50 
+  AND (current_position ->> 'y')::FLOAT != 50;
   
-  -- If position exists and is valid, return it
-  IF current_pos IS NOT NULL AND current_pos ? 'x' AND current_pos ? 'y' THEN
+  -- If valid position exists, return it
+  IF current_pos IS NOT NULL THEN
     RETURN current_pos;
   END IF;
   
-  -- Generate random position around center (50,50)
+  -- Generate random position that's not too close to center
   angle := random() * 2 * pi();
   distance := min_radius + (random() * (max_radius - min_radius));
   new_x := 50 + (distance * cos(angle));
   new_y := 50 + (distance * sin(angle));
   
   -- Ensure positions are within reasonable bounds
-  new_x := GREATEST(10, LEAST(90, new_x));
-  new_y := GREATEST(10, LEAST(90, new_y));
+  new_x := GREATEST(15, LEAST(85, new_x));
+  new_y := GREATEST(15, LEAST(85, new_y));
   
   current_pos := jsonb_build_object('x', new_x, 'y', new_y);
   
-  -- Update user profile with the new position
+  -- Permanently save the position
   UPDATE user_profiles 
   SET current_position = current_pos
   WHERE id = user_id;
@@ -91,25 +94,30 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Function to check if user can send message
+-- Update rate limit to 8 seconds for testing
 CREATE OR REPLACE FUNCTION can_send_message(user_uuid UUID)
 RETURNS BOOLEAN AS $$
 DECLARE
   last_message_time TIMESTAMPTZ;
-  rate_limit_minutes INTEGER := 30;
+  rate_limit_seconds INTEGER := 8; -- Changed from 30 minutes to 8 seconds
 BEGIN
+  -- Get the most recent message time for this user
   SELECT created_at INTO last_message_time
   FROM user_messages 
   WHERE user_id = user_uuid 
   ORDER BY created_at DESC 
   LIMIT 1;
   
+  -- If no previous messages, allow sending
   IF last_message_time IS NULL THEN
     RETURN TRUE;
   END IF;
   
-  RETURN EXTRACT(EPOCH FROM (NOW() - last_message_time)) > (rate_limit_minutes * 60);
+  -- Check if enough time has passed (8 seconds now)
+  RETURN EXTRACT(EPOCH FROM (NOW() - last_message_time)) > rate_limit_seconds;
 END;
 $$ LANGUAGE plpgsql;
+
 
 -- Function to mark user offline
 CREATE OR REPLACE FUNCTION mark_user_offline(user_id UUID)
@@ -167,3 +175,11 @@ WHERE pubname = 'supabase_realtime';
 
 
 SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';
+
+-- Check if user_messages table has data
+SELECT * FROM user_messages LIMIT 5;
+
+-- Check if chat_messages table has data  
+SELECT * FROM chat_messages LIMIT 5;
+
+SELECT id, email, online FROM user_profiles WHERE email = 'greenychad@gmail.com';
